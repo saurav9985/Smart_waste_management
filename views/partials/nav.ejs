@@ -1,0 +1,23 @@
+<nav class="site-nav" aria-label="Account">
+  <a href="/" class="nav-link">Home</a>
+  <% if (citizen) { %>
+    <a href="/bins-page" class="nav-link">Garbage Bins</a>
+    <% if (citizen.role === 'admin') { %>
+      <a href="/admin/install-bin" class="nav-link nav-link-admin">Install New Bin</a>
+    <% } %>
+    <span class="nav-user" title="<%= citizen.email %>">
+      <%= citizen.name %>
+      <% if (citizen.role === 'admin') { %>
+        <span class="role-badge role-badge--admin">Admin</span>
+      <% } else { %>
+        <span class="role-badge role-badge--citizen">Citizen</span>
+      <% } %>
+    </span>
+    <form action="/logout" method="post" class="nav-logout">
+      <button type="submit" class="link-btn">Log out</button>
+    </form>
+  <% } else { %>
+    <a href="/login" class="nav-link">Login</a>
+    <a href="/register" class="nav-link nav-link-accent">Register</a>
+  <% } %>
+</nav>

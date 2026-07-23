@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Install New Bin — Waste Watch Admin</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+</head>
+<body class="auth-body">
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">◉</span>
+        <div>
+          <h1><a href="/" class="brand-link">Waste Watch</a></h1>
+          <p class="tagline">Admin — Bin Installation</p>
+        </div>
+      </div>
+      <%- include('partials/nav', { citizen: typeof citizen !== 'undefined' ? citizen : null }) %>
+    </div>
+  </header>
+
+  <main class="wrap auth-main">
+    <section class="panel auth-panel admin-form-panel" aria-labelledby="install-heading">
+      <div class="admin-form-header">
+        <span class="admin-form-icon">🗑️</span>
+        <div>
+          <h2 id="install-heading">Install New Bin</h2>
+          <p class="auth-lead">Register a new garbage bin in the system by providing its location and initial status.</p>
+        </div>
+      </div>
+
+      <% if (error) { %>
+        <p class="flash flash-error" role="alert"><%= error %></p>
+      <% } %>
+      <% if (success) { %>
+        <p class="flash flash-success" role="status"><%= success %></p>
+      <% } %>
+
+      <form class="auth-form" action="/admin/install-bin" method="post">
+        <label class="field">
+          <span class="label">Location</span>
+          <input type="text" name="location" placeholder="e.g. Andheri East, Mumbai" required />
+          <span class="hint">Street name, area, or landmark where the bin will be placed</span>
+        </label>
+
+        <label class="field">
+          <span class="label">Initial Fill Level (%)</span>
+          <input type="number" name="level" min="0" max="100" value="0" required />
+          <span class="hint">0 = empty, 100 = completely full</span>
+        </label>
+
+        <label class="field">
+          <span class="label">Status</span>
+          <select name="status" class="form-select" required>
+            <option value="Empty" selected>Empty</option>
+            <option value="Full">Full</option>
+            <option value="Needs Cleaning">Needs Cleaning</option>
+          </select>
+        </label>
+
+        <button type="submit" class="btn btn-primary">
+          <span style="margin-right: 0.5rem;">📌</span> Install Bin
+        </button>
+      </form>
+
+      <div class="admin-form-footer">
+        <a href="/bins-page" class="btn btn-ghost">← Back to Bins Dashboard</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Local waste visibility — share responsibly and follow municipal disposal rules.</p>
+    </div>
+  </footer>
+</body>
+</html>

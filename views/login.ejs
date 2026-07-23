@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login — Waste Watch</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+</head>
+<body class="auth-body">
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">◉</span>
+        <div>
+          <h1><a href="/" class="brand-link">Waste Watch</a></h1>
+          <p class="tagline">Role-based login</p>
+        </div>
+      </div>
+      <%- include('partials/nav', { citizen: null }) %>
+    </div>
+  </header>
+
+  <main class="wrap auth-main">
+    <section class="panel auth-panel" aria-labelledby="login-heading">
+      <h2 id="login-heading">Log in</h2>
+      <p class="auth-lead">Select your role and enter your credentials to access the dashboard.</p>
+
+      <!-- Role Toggle -->
+      <div class="role-toggle" id="role-toggle">
+        <button type="button" class="role-toggle__btn <%= (typeof selectedRole !== 'undefined' && selectedRole === 'citizen') || typeof selectedRole === 'undefined' ? 'role-toggle__btn--active' : '' %>" data-role="citizen" id="role-btn-citizen">
+          <span class="role-toggle__icon">👤</span>
+          <span class="role-toggle__label">Citizen</span>
+        </button>
+        <button type="button" class="role-toggle__btn <%= typeof selectedRole !== 'undefined' && selectedRole === 'admin' ? 'role-toggle__btn--active' : '' %>" data-role="admin" id="role-btn-admin">
+          <span class="role-toggle__icon">🛡️</span>
+          <span class="role-toggle__label">Admin</span>
+        </button>
+      </div>
+
+      <% if (error) { %>
+        <p class="flash flash-error" role="alert"><%= error %></p>
+      <% } %>
+
+      <form class="auth-form" action="/login" method="post" id="login-form">
+        <input type="hidden" name="next" value="<%= typeof nextUrl !== 'undefined' && nextUrl.startsWith('/') ? nextUrl : '/' %>" />
+        <input type="hidden" name="role" id="role-input" value="<%= typeof selectedRole !== 'undefined' ? selectedRole : 'citizen' %>" />
+        <label class="field">
+          <span class="label">Email</span>
+          <input type="email" name="email" autocomplete="email" required />
+        </label>
+        <label class="field">
+          <span class="label">Password</span>
+          <input type="password" name="password" autocomplete="current-password" required />
+        </label>
+        <button type="submit" class="btn btn-primary" id="login-submit-btn">Log in</button>
+      </form>
+
+      <div class="role-info" id="role-info-citizen" style="<%= typeof selectedRole !== 'undefined' && selectedRole === 'admin' ? 'display:none' : '' %>">
+        <p class="auth-switch">No account? <a href="/register">Register as a citizen</a></p>
+        <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+          <p class="auth-switch">Prefer to login with OTP?</p>
+          <a href="/login/otp" class="btn btn-secondary" style="display: block; text-align: center; margin-top: 0.5rem; text-decoration: none;">Login with Mobile (OTP)</a>
+        </div>
+      </div>
+
+      <div class="role-info" id="role-info-admin" style="<%= typeof selectedRole === 'undefined' || selectedRole !== 'admin' ? 'display:none' : '' %>">
+        <p class="auth-switch admin-hint">
+          <span class="admin-hint__icon">🔒</span>
+          Admin access is restricted. Contact the system administrator if you need credentials.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Local waste visibility — share responsibly and follow municipal disposal rules.</p>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      const citizenBtn = document.getElementById('role-btn-citizen');
+      const adminBtn = document.getElementById('role-btn-admin');
+      const roleInput = document.getElementById('role-input');
+      const citizenInfo = document.getElementById('role-info-citizen');
+      const adminInfo = document.getElementById('role-info-admin');
+      const submitBtn = document.getElementById('login-submit-btn');
+
+      function setRole(role) {
+        roleInput.value = role;
+        if (role === 'citizen') {
+          citizenBtn.classList.add('role-toggle__btn--active');
+          adminBtn.classList.remove('role-toggle__btn--active');
+          citizenInfo.style.display = '';
+          adminInfo.style.display = 'none';
+          submitBtn.textContent = 'Log in as Citizen';
+        } else {
+          adminBtn.classList.add('role-toggle__btn--active');
+          citizenBtn.classList.remove('role-toggle__btn--active');
+          citizenInfo.style.display = 'none';
+          adminInfo.style.display = '';
+          submitBtn.textContent = 'Log in as Admin';
+        }
+      }
+
+      citizenBtn.addEventListener('click', () => setRole('citizen'));
+      adminBtn.addEventListener('click', () => setRole('admin'));
+
+      // Initialize label on load
+      setRole(roleInput.value || 'citizen');
+    })();
+  </script>
+</body>
+</html>

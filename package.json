@@ -1,0 +1,22 @@
+{
+  "name": "waste-watch",
+  "version": "1.0.0",
+  "description": "Community waste area reporting and resolution tracking",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^17.4.2",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "mongoose": "^8.9.3",
+    "multer": "^1.4.5-lts.1"
+  }
+}

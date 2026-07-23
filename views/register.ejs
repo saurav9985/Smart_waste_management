@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Register — Waste Watch</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+</head>
+<body class="auth-body">
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">◉</span>
+        <div>
+          <h1><a href="/" class="brand-link">Waste Watch</a></h1>
+          <p class="tagline">Citizen registration</p>
+        </div>
+      </div>
+      <%- include('partials/nav', { citizen: null }) %>
+    </div>
+  </header>
+
+  <main class="wrap auth-main">
+    <section class="panel auth-panel" aria-labelledby="register-heading">
+      <h2 id="register-heading">Create a citizen account</h2>
+      <p class="auth-lead">Register once, then log in to post photos and descriptions of waste areas.</p>
+      <% if (error) { %>
+        <p class="flash flash-error" role="alert"><%= error %></p>
+      <% } %>
+      <form class="auth-form" action="/register" method="post">
+        <label class="field">
+          <span class="label">Full name</span>
+          <input type="text" name="name" autocomplete="name" required />
+        </label>
+        <label class="field">
+          <span class="label">Email</span>
+          <input type="email" name="email" autocomplete="email" required />
+        </label>
+        <label class="field">
+          <span class="label">Mobile Number (optional)</span>
+          <input type="tel" name="mobileNumber" autocomplete="tel" pattern="[0-9]*" minlength="10" maxlength="15" />
+        </label>
+        <label class="field">
+          <span class="label">Password</span>
+          <input type="password" name="password" autocomplete="new-password" minlength="8" required />
+          <span class="hint">At least 8 characters</span>
+        </label>
+        <label class="field">
+          <span class="label">Confirm password</span>
+          <input type="password" name="confirm" autocomplete="new-password" minlength="8" required />
+        </label>
+        <button type="submit" class="btn btn-primary">Create account</button>
+      </form>
+      <p class="auth-switch">Already registered? <a href="/login">Log in</a></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Local waste visibility — share responsibly and follow municipal disposal rules.</p>
+    </div>
+  </footer>
+</body>
+</html>

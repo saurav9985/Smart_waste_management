@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Waste Watch — Report & track cleanup</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">◉</span>
+        <div>
+          <h1>Waste Watch</h1>
+          <p class="tagline">Citizen waste reports for a cleaner community</p>
+        </div>
+      </div>
+      <%- include('partials/nav', { citizen: typeof citizen !== 'undefined' ? citizen : null }) %>
+    </div>
+  </header>
+
+  <div class="purpose-bar" role="region" aria-label="About this app">
+    <div class="wrap purpose-inner">
+      <span class="purpose-icon" aria-hidden="true">♻</span>
+      <div class="purpose-copy">
+        <strong class="purpose-title">What this app is for</strong>
+        <p class="purpose-text">Report illegal dumping, overflowing bins, street litter, or unsafe waste. Upload a photo, describe the location and issue, and track whether it’s resolved—so local cleanup teams and residents can act faster.</p>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap main-grid">
+    <section class="panel submit-panel" aria-labelledby="submit-heading">
+      <h2 id="submit-heading">Report a waste area</h2>
+      <% if (error) { %>
+        <p class="flash flash-error" role="alert"><%= error %></p>
+      <% } %>
+      <% if (typeof success !== 'undefined' && success) { %>
+        <p class="flash flash-success" role="status"><%= success %></p>
+      <% } %>
+      <% if (citizen) { %>
+      <form class="report-form" action="/reports" method="post" enctype="multipart/form-data">
+        <label class="field">
+          <span class="label">Photo</span>
+          <input type="file" name="photo" accept="image/jpeg,image/png,image/gif,image/webp" required />
+          <span class="hint">JPEG, PNG, GIF, or WebP — up to 8 MB</span>
+        </label>
+        <label class="field">
+          <span class="label">What’s wrong?</span>
+          <textarea name="description" rows="5" placeholder="Location hints, type of waste, safety concerns, access…" required></textarea>
+        </label>
+        <button type="submit" class="btn btn-primary">Submit report</button>
+      </form>
+      <% } else { %>
+      <div class="login-prompt">
+        <p class="login-prompt-text">Log in with your citizen account to submit a report with a photo and description.</p>
+        <div class="login-prompt-actions">
+          <a class="btn btn-primary" href="/login?next=/">Citizen login</a>
+          <a class="btn btn-secondary" href="/register">Register</a>
+        </div>
+      </div>
+      <% } %>
+    </section>
+
+    <section class="panel list-panel" aria-labelledby="list-heading">
+      <h2 id="list-heading">Reports</h2>
+      <% if (!citizen) { %>
+        <p class="empty empty-muted">Complaint data is hidden while you are logged out. It stays saved—log back in to see your reports and the community list.</p>
+      <% } else if (!reports.length) { %>
+        <p class="empty">No reports yet. Be the first to document an area that needs attention.</p>
+      <% } else { %>
+        <ul class="report-list">
+          <% reports.forEach(function (r) { %>
+            <li class="report-card <%= r.status === 'resolved' ? 'is-resolved' : '' %>">
+              <div class="report-card-layout">
+              <div class="report-media">
+                <div class="report-media-inner">
+                  <img src="<%= r.image %>" alt="Reported waste area" loading="lazy" width="160" height="120" />
+                </div>
+                <span class="badge badge-<%= r.status === 'resolved' ? 'resolved' : 'open' %>">
+                  <%= r.status === 'resolved' ? 'Resolved' : 'Open' %>
+                </span>
+              </div>
+              <div class="report-body">
+                <p class="report-desc"><%= r.description %></p>
+                <p class="meta">
+                  <% if (r.submittedByName) { %>
+                    By <%= r.submittedByName %> ·
+                  <% } %>
+                  Reported <time datetime="<%= r.createdAt %>"><%= new Date(r.createdAt).toLocaleString() %></time>
+                  <% if (r.resolvedAt) { %>
+                    · Resolved <time datetime="<%= r.resolvedAt %>"><%= new Date(r.resolvedAt).toLocaleString() %></time>
+                  <% } %>
+                </p>
+                <div class="report-actions">
+                <% if (r.isOwner) { %>
+                  <form action="/reports/<%= r.id %>/delete" method="post" class="inline-form" onsubmit="return confirm('Delete this complaint permanently? This cannot be undone.');">
+                    <button type="submit" class="btn btn-danger">Delete my report</button>
+                  </form>
+                <% } %>
+                <% if (r.status === 'open') { %>
+                  <form action="/reports/<%= r.id %>/resolve" method="post" class="inline-form">
+                    <button type="submit" class="btn btn-resolve">Mark resolved</button>
+                  </form>
+                <% } else { %>
+                  <form action="/reports/<%= r.id %>/reopen" method="post" class="inline-form">
+                    <button type="submit" class="btn btn-ghost">Reopen</button>
+                  </form>
+                <% } %>
+                </div>
+              </div>
+              </div>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Local waste visibility — share responsibly and follow municipal disposal rules.</p>
+    </div>
+  </footer>
+  <script src="/js/flash.js"></script>
+</body>
+</html>

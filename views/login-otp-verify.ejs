@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Verify OTP — Waste Watch</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+</head>
+<body class="auth-body">
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">◉</span>
+        <div>
+          <h1><a href="/" class="brand-link">Waste Watch</a></h1>
+          <p class="tagline">Citizen login</p>
+        </div>
+      </div>
+      <%- include('partials/nav', { citizen: null }) %>
+    </div>
+  </header>
+
+  <main class="wrap auth-main">
+    <section class="panel auth-panel" aria-labelledby="login-heading">
+      <h2 id="login-heading">Verify OTP</h2>
+      <p class="auth-lead">Sent to <%= mobile %>. Valid for 5 minutes.</p>
+      <% if (error) { %>
+        <p class="flash flash-error" role="alert"><%= error %></p>
+      <% } %>
+      <form class="auth-form" action="/login/otp/verify" method="post">
+        <label class="field">
+          <span class="label">6-digit OTP Code</span>
+          <input type="text" name="code" pattern="[0-9]{6}" autocomplete="one-time-code" required autofocus />
+        </label>
+        <button type="submit" class="btn btn-primary">Verify & Login</button>
+      </form>
+      <p class="auth-switch"><a href="/login/otp">Use a different number</a></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Local waste visibility — share responsibly and follow municipal disposal rules.</p>
+    </div>
+  </footer>
+</body>
+</html>
