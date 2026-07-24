@@ -569,6 +569,17 @@ app.get("/bin-page", (req, res) => {
 });
 
 // ─── Admin: Bin Management ──────────────────────────────────────────
+// Driver route optimization page
+app.get(
+  "/admin/route",
+  requireAdmin,
+  (req, res) => {
+    res.render("admin-route", {
+      citizen: sessionCitizen(req),
+    });
+  }
+);
+
 // Install new bin (form)
 app.get(
   "/admin/install-bin",

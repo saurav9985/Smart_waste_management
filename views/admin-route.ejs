@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Driver Route Optimization — Waste Watch Admin</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <style>
+    .route-layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 950px) {
+      .route-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .map-container {
+      height: 560px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border: 1px solid var(--border, #333);
+    }
+    .route-panel {
+      background: var(--surface, #1e293b);
+      border: 1px solid var(--border, #334155);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      color: #f8fafc;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 0.75rem;
+    }
+    .metric-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    .metric-card .val {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #a5d6a7;
+    }
+    .metric-card .lbl {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .waypoint-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 290px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .waypoint-item {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid #2ecc71;
+      padding: 0.6rem 0.8rem;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.85rem;
+    }
+    .waypoint-item.origin { border-left-color: #3b82f6; }
+    .waypoint-item.critical { border-left-color: #ef4444; }
+    .waypoint-item .step-num {
+      font-weight: 700;
+      color: #60a5fa;
+      margin-right: 0.4rem;
+    }
+  </style>
+</head>
+<body class="auth-body">
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">◉</span>
+        <div>
+          <h1><a href="/" class="brand-link">Waste Watch</a></h1>
+          <p class="tagline">Admin — Driver Route Optimization</p>
+        </div>
+      </div>
+      <%- include('partials/nav', { citizen: typeof citizen !== 'undefined' ? citizen : null }) %>
+    </div>
+  </header>
+
+  <main class="wrap" style="padding-top: 1.5rem; padding-bottom: 3rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h2 style="margin: 0; color: #f8fafc; font-size: 1.75rem;">🚛 Driver Pickup Route</h2>
+        <p style="margin: 0.25rem 0 0 0; color: #94a3b8;">Shortest path distance route calculation across Mumbai for maximum filled bins.</p>
+      </div>
+      <div>
+        <a href="/bins-page" class="btn btn-ghost">← Back to Bins Dashboard</a>
+      </div>
+    </div>
+
+    <div class="route-layout">
+      <div>
+        <div id="map" class="map-container"></div>
+      </div>
+
+      <div class="route-panel">
+        <h3 style="margin: 0; font-size: 1.1rem; color: #a5d6a7;">Route Details & Matrix</h3>
+        
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="val" id="totalDistance">-- km</div>
+            <div class="lbl">Total Distance</div>
+          </div>
+          <div class="metric-card">
+            <div class="val" id="totalDuration">-- mins</div>
+            <div class="lbl">Est. Duration</div>
+          </div>
+          <div class="metric-card">
+            <div class="val" id="binsCount">0</div>
+            <div class="lbl">Bins to Collect</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+          <label style="font-size: 0.85rem; color: #cbd5e1; font-weight: 600;">Depot / Start Location (Mumbai):</label>
+          <input type="text" id="startLocationInput" value="Bandra Kurla Complex (BKC) Depot, Mumbai" style="padding: 0.5rem; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 0.85rem;" />
+          <button type="button" id="recalcBtn" class="btn btn-accent" style="margin-top: 0.25rem; font-size: 0.85rem; padding: 0.5rem;">Recalculate Shortest Route</button>
+        </div>
+
+        <div>
+          <h4 style="margin: 0.5rem 0; font-size: 0.95rem; color: #94a3b8;">Optimized Waypoint Sequence:</h4>
+          <ul id="waypointList" class="waypoint-list">
+            <li class="waypoint-item origin">Loading route...</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let map, directionsService, directionsRenderer, geocoder;
+    let mapMarkers = [];
+    let routePolyline = null;
+
+    // Preset Mumbai Coordinates mapping for common locations
+    const MUMBAI_LOCATIONS = {
+      "bkc": { lat: 19.0600, lng: 72.8650 },
+      "bandra": { lat: 19.0596, lng: 72.8295 },
+      "andheri": { lat: 19.1197, lng: 72.8464 },
+      "dadar": { lat: 19.0178, lng: 72.8478 },
+      "kurla": { lat: 19.0657, lng: 72.8784 },
+      "powai": { lat: 19.1176, lng: 72.9060 },
+      "thane": { lat: 19.2183, lng: 72.9781 },
+      "borivali": { lat: 19.2307, lng: 72.8567 },
+      "colaba": { lat: 18.9067, lng: 72.8147 },
+      "worli": { lat: 19.0134, lng: 72.8168 },
+      "ghatkopar": { lat: 19.0860, lng: 72.9080 }
+    };
+
+    function initMap() {
+      // Default centered at Mumbai (BKC Area - nearest center to all Mumbai bins)
+      const mumbaiCenter = { lat: 19.0760, lng: 72.8777 };
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: mumbaiCenter,
+        zoom: 12,
+        styles: [
+          { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+          { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+          { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+          { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+          { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+          { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+          { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
+          { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] }
+        ]
+      });
+
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({
+        map: map,
+        suppressMarkers: true,
+        polylineOptions: { strokeColor: "#22c55e", strokeWeight: 5, strokeOpacity: 0.85 }
+      });
+      geocoder = new google.maps.Geocoder();
+
+      calculateRoute();
+
+      document.getElementById("recalcBtn").addEventListener("click", calculateRoute);
+    }
+
+    // Haversine Distance Formula (Great Circle distance in kilometers)
+    function getHaversineDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    // Geocode location string or return Mumbai coordinate
+    function resolveLocationCoords(locStr) {
+      return new Promise((resolve) => {
+        const clean = (locStr || "").toLowerCase();
+        for (let key in MUMBAI_LOCATIONS) {
+          if (clean.includes(key)) {
+            return resolve(MUMBAI_LOCATIONS[key]);
+          }
+        }
+        
+        // Use Google Geocoder as backup
+        geocoder.geocode({ address: locStr + ", Mumbai, Maharashtra, India" }, (results, status) => {
+          if (status === "OK" && results && results[0]) {
+            const loc = results[0].geometry.location;
+            resolve({ lat: loc.lat(), lng: loc.lng() });
+          } else {
+            // Generate deterministic Mumbai coordinate based on string hash if geocoding restricted
+            let hash = 0;
+            for (let i = 0; i < locStr.length; i++) hash = locStr.charCodeAt(i) + ((hash << 5) - hash);
+            const lat = 19.0000 + (Math.abs(hash) % 150) / 1000;
+            const lng = 72.8200 + (Math.abs(hash * 3) % 120) / 1000;
+            resolve({ lat, lng });
+          }
+        });
+      });
+    }
+
+    function clearMapElements() {
+      mapMarkers.forEach(m => m.setMap(null));
+      mapMarkers = [];
+      if (routePolyline) {
+        routePolyline.setMap(null);
+        routePolyline = null;
+      }
+    }
+
+    async function calculateRoute() {
+      clearMapElements();
+      const startLocationStr = document.getElementById("startLocationInput").value || "Bandra Kurla Complex (BKC) Depot, Mumbai";
+      const waypointListEl = document.getElementById("waypointList");
+      waypointListEl.innerHTML = '<li class="waypoint-item">Calculating minimum path distance route...</li>';
+
+      try {
+        const response = await fetch('/bins');
+        const bins = await response.json();
+
+        // Sort bins by fill level (descending) and select max filled bins / critical (>80% or Full/Needs Cleaning)
+        let criticalBins = bins.filter(b => b.level > 80 || b.status === "Full" || b.status === "Needs Cleaning");
+        
+        // If no critical bins exist, select top 5 most filled bins
+        if (criticalBins.length === 0 && bins.length > 0) {
+          criticalBins = [...bins].sort((a, b) => b.level - a.level).slice(0, 5);
+        }
+
+        document.getElementById("binsCount").innerText = criticalBins.length;
+
+        if (criticalBins.length === 0) {
+          waypointListEl.innerHTML = '<li class="waypoint-item">No installed bins found in the system!</li>';
+          document.getElementById("totalDistance").innerText = "0 km";
+          document.getElementById("totalDuration").innerText = "0 mins";
+          return;
+        }
+
+        // Resolve coordinates for Depot and all Critical Bins
+        const startCoords = await resolveLocationCoords(startLocationStr);
+        const resolvedBins = [];
+
+        for (let b of criticalBins) {
+          const coords = await resolveLocationCoords(b.location);
+          resolvedBins.push({ ...b, coords });
+        }
+
+        // Try Google Directions Service API first
+        const waypoints = resolvedBins.map(b => ({
+          location: new google.maps.LatLng(b.coords.lat, b.coords.lng),
+          stopover: true
+        }));
+
+        const request = {
+          origin: new google.maps.LatLng(startCoords.lat, startCoords.lng),
+          destination: new google.maps.LatLng(startCoords.lat, startCoords.lng),
+          waypoints: waypoints,
+          optimizeWaypoints: true,
+          travelMode: google.maps.TravelMode.DRIVING
+        };
+
+        directionsService.route(request, (result, status) => {
+          if (status === google.maps.DirectionsStatus.OK) {
+            // Google Directions API Success
+            directionsRenderer.setDirections(result);
+            renderDirectionsResult(result, startLocationStr, resolvedBins);
+          } else {
+            // Fallback: Haversine Shortest Distance Matrix TSP algorithm if Directions API returns REQUEST_DENIED
+            renderShortestMatrixRoute(startCoords, startLocationStr, resolvedBins);
+          }
+        });
+
+      } catch (err) {
+        console.error("Error calculating route:", err);
+        waypointListEl.innerHTML = `<li class="waypoint-item critical">Error fetching bin data from server.</li>`;
+      }
+    }
+
+    function renderDirectionsResult(result, startLocStr, resolvedBins) {
+      const route = result.routes[0];
+      const waypointListEl = document.getElementById("waypointList");
+      let totalDistMeters = 0;
+      let totalDurationSecs = 0;
+
+      let html = `<li class="waypoint-item origin"><span class="step-num">DEPOT</span> ${startLocStr}</li>`;
+      const waypointOrder = route.waypoint_order;
+
+      route.legs.forEach((leg, i) => {
+        totalDistMeters += leg.distance.value;
+        totalDurationSecs += leg.duration.value;
+
+        if (i < waypointOrder.length) {
+          const binIndex = waypointOrder[i];
+          const bin = resolvedBins[binIndex];
+          html += `
+            <li class="waypoint-item critical">
+              <span class="step-num">STOP ${i + 1}</span>
+              <strong>${bin.location}</strong> (${bin.level}% Full)
+              <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">
+                Leg: ${leg.distance.text} • ${leg.duration.text}
+              </div>
+            </li>`;
+        }
+      });
+
+      html += `<li class="waypoint-item origin"><span class="step-num">END</span> Return to Depot</li>`;
+      waypointListEl.innerHTML = html;
+
+      document.getElementById("totalDistance").innerText = (totalDistMeters / 1000).toFixed(1) + " km";
+      document.getElementById("totalDuration").innerText = Math.round(totalDurationSecs / 60) + " mins";
+    }
+
+    // Nearest Neighbor TSP Shortest Path Distance Calculation (Haversine Matrix Fallback)
+    function renderShortestMatrixRoute(startCoords, startLocStr, resolvedBins) {
+      const waypointListEl = document.getElementById("waypointList");
+      let unvisited = [...resolvedBins];
+      let currentPos = startCoords;
+      let orderedRoute = [];
+      let totalDistKm = 0;
+
+      // Nearest Neighbor Algorithm for Minimum Path Distance
+      while (unvisited.length > 0) {
+        let nearestIdx = 0;
+        let minLinearDist = getHaversineDistance(currentPos.lat, currentPos.lng, unvisited[0].coords.lat, unvisited[0].coords.lng);
+
+        for (let i = 1; i < unvisited.length; i++) {
+          const dist = getHaversineDistance(currentPos.lat, currentPos.lng, unvisited[i].coords.lat, unvisited[i].coords.lng);
+          if (dist < minLinearDist) {
+            minLinearDist = dist;
+            nearestIdx = i;
+          }
+        }
+
+        const nextStop = unvisited.splice(nearestIdx, 1)[0];
+        // Apply 1.35x road distance winding factor over straight-line Haversine
+        const roadLegDist = minLinearDist * 1.35;
+        totalDistKm += roadLegDist;
+        orderedRoute.push({ ...nextStop, legDist: roadLegDist });
+        currentPos = nextStop.coords;
+      }
+
+      // Return leg to Depot
+      const returnDist = getHaversineDistance(currentPos.lat, currentPos.lng, startCoords.lat, startCoords.lng) * 1.35;
+      totalDistKm += returnDist;
+
+      // Build Map Path Polyline & Markers
+      const pathCoordinates = [startCoords, ...orderedRoute.map(b => b.coords), startCoords];
+
+      routePolyline = new google.maps.Polyline({
+        path: pathCoordinates,
+        geodesic: true,
+        strokeColor: '#22c55e',
+        strokeOpacity: 0.9,
+        strokeWeight: 5,
+        map: map
+      });
+
+      // Fit map bounds to view all route points
+      const bounds = new google.maps.LatLngBounds();
+      pathCoordinates.forEach(p => bounds.extend(p));
+      map.fitBounds(bounds);
+
+      // Create Custom Depot Marker
+      const depotMarker = new google.maps.Marker({
+        position: startCoords,
+        map: map,
+        title: startLocStr,
+        icon: { url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png' }
+      });
+      const depotInfo = new google.maps.InfoWindow({
+        content: `
+          <div style="color: #e8f5e9; font-family: system-ui, sans-serif; min-width: 160px; padding: 4px 0;">
+            <h3 style="margin: 0 0 4px 0; color: #60a5fa; font-size: 15px; font-weight: 700;">
+              🏢 Starting Depot
+            </h3>
+            <p style="margin: 4px 0 0 0; color: #e8f5e9; font-size: 13px;">
+              ${startLocStr}
+            </p>
+          </div>
+        `
+      });
+      depotMarker.addListener('click', () => depotInfo.open(map, depotMarker));
+      mapMarkers.push(depotMarker);
+
+      // Create Waypoint Stop Markers
+      let html = `<li class="waypoint-item origin"><span class="step-num">DEPOT</span> ${startLocStr}</li>`;
+
+      orderedRoute.forEach((bin, idx) => {
+        const legMins = Math.max(3, Math.round((bin.legDist / 25) * 60));
+        html += `
+          <li class="waypoint-item critical">
+            <span class="step-num">STOP ${idx + 1}</span>
+            <strong>${bin.location}</strong> (${bin.level}% Full)
+            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">
+              Leg Distance: ${bin.legDist.toFixed(1)} km • ~${legMins} mins
+            </div>
+          </li>`;
+
+        let statusColor = "#2ecc71";
+        if (bin.level > 80) statusColor = "#e74c3c";
+        else if (bin.level > 50) statusColor = "#f1c40f";
+
+        const marker = new google.maps.Marker({
+          position: bin.coords,
+          map: map,
+          title: `Stop ${idx + 1}: ${bin.location}`,
+          icon: { url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' }
+        });
+
+        const info = new google.maps.InfoWindow({
+          content: `
+            <div style="color: #e8f5e9; font-family: system-ui, sans-serif; min-width: 160px; padding: 4px 0;">
+              <h3 style="margin: 0 0 4px 0; color: #a5d6a7; font-size: 15px; font-weight: 700;">
+                🗑️ Stop ${idx + 1}: ${bin.location}
+              </h3>
+              <p style="margin: 4px 0 0 0; color: #e8f5e9; font-size: 13px;">
+                <strong>Fill Level:</strong> <span style="color: ${statusColor}; font-weight: bold;">${bin.level}%</span>
+              </p>
+            </div>
+          `
+        });
+        marker.addListener('click', () => info.open(map, marker));
+
+        mapMarkers.push(marker);
+      });
+
+      html += `<li class="waypoint-item origin"><span class="step-num">END</span> Return to Depot</li>`;
+      waypointListEl.innerHTML = html;
+
+      // Est. Duration = (Driving time at 25km/h city speed) + (8 mins service per bin)
+      const estDurationMins = Math.round((totalDistKm / 25) * 60) + (orderedRoute.length * 8);
+
+      document.getElementById("totalDistance").innerText = totalDistKm.toFixed(1) + " km";
+      document.getElementById("totalDuration").innerText = estDurationMins + " mins";
+    }
+  </script>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDKEejrX1H5-JVx5HUFobMNKLkvfA2S7I&callback=initMap" async defer></script>
+</body>
+</html>

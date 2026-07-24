@@ -4,6 +4,7 @@
     <a href="/bins-page" class="nav-link">Garbage Bins</a>
     <% if (citizen.role === 'admin') { %>
       <a href="/admin/install-bin" class="nav-link nav-link-admin">Install New Bin</a>
+      <a href="/admin/route" class="nav-link nav-link-admin">Driver Route</a>
     <% } %>
     <span class="nav-user" title="<%= citizen.email %>">
       <%= citizen.name %>
