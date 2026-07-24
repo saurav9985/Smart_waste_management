@@ -24,8 +24,8 @@ const SESSION_SECRET =
 const MONGODB_URI = process.env.MONGODB_URL;
 
 // Admin defaults (override via .env)
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "admin@wastewatch.com").toLowerCase();
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin1234";
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "admin@smartWasteWatch.com").toLowerCase();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin@1234";
 const ADMIN_NAME = process.env.ADMIN_NAME || "Administrator";
 
 const ROOT = __dirname;
