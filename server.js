@@ -564,6 +564,9 @@ app.get("/bins-page", (req, res) => {
     citizen: req.session.citizen || null,
   });
 });
+app.get("/bin-page", (req, res) => {
+  res.redirect("/bins-page");
+});
 
 // ─── Admin: Bin Management ──────────────────────────────────────────
 // Install new bin (form)
@@ -615,11 +618,7 @@ app.post(
 
     await Bin.create({ location, level, status });
 
-    res.render("install-bin", {
-      citizen: sessionCitizen(req),
-      error: null,
-      success: `Bin installed successfully at "${location}".`,
-    });
+    return res.redirect("/bins-page");
   })
 );
 
